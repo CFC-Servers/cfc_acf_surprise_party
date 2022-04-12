@@ -112,7 +112,7 @@ if CLIENT then
     net.Receive( "acf_surprise", function()
         local gun = net.ReadEntity()
         local reloadTime = net.ReadUInt( 5 )
-        local count = Clamp( reloadTime * 225, 1, 475 )
+        local count = Clamp( reloadTime * 225, 1, 275 )
         local forward = gun:GetAngles():Forward()
         local pos = gun:GetAttachment(gun:LookupAttachment("muzzle")).Pos
         confetti( count, pos, forward )
