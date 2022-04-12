@@ -123,7 +123,7 @@ if CLIENT then
                 local pitch = Rand( 80, 115 )
 
                 timer.Simple( Rand( 0, 0.6 ), function()
-                    sound.Play( soundPath, pos, 80, pitch, 1 )
+                    sound.Play( soundPath, pos, 130, pitch, 1 )
                 end )
             end
         end
