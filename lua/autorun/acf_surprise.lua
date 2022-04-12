@@ -31,6 +31,39 @@ if CLIENT then
     local Rand = math.Rand
     local random = math.random
     local Clamp = math.Clamp
+    local ceil = math.ceil
+
+    local CreateClientProp = ents.CreateClientProp
+    local IsValid = IsValid
+    local rawget = rawget
+
+    local function playSurpriseSoundOn( ent, origin )
+        local soundPath = rawget( surpriseSounds, random( 1, surpriseSoundsCount ) )
+        local pitch = Rand( 75, 110 )
+
+        local soundEnt = CreateClientProp( "models/props_junk/PopCan01a.mdl" )
+        soundEnt:SetNoDraw( true )
+        soundEnt:SetNotSolid( true )
+        soundEnt:SetPos( origin + ( Vector( Rand( -1, 1 ), Rand( -1, 1 ), Rand( -1, 1 ) ) * Rand( 1, 10 ) ) )
+        soundEnt:SetParent( ent )
+        soundEnt:Spawn()
+        soundEnt:CallOnRemove( "StopSurpriseSound", function()
+            soundEnt:StopSound( soundPath )
+        end )
+
+        timer.Simple( Rand( 0, 1 ), function()
+            if not IsValid( soundEnt ) then return end
+
+            soundEnt:EmitSound( soundPath, 130, pitch, 1, CHAN_WEAPON )
+        end )
+
+        timer.Simple( 2.5, function()
+            if not IsValid( soundEnt ) then return end
+            soundEnt:Remove()
+        end )
+
+        return soundEnt
+    end
 
     local TIGHTNESS         = 300
     local HORIZONTAL_SPREAD = 80
@@ -70,7 +103,7 @@ if CLIENT then
         local emitter = ParticleEmitter( startPos, true )
 
         for _ = 0, particleCount do
-            local randomColor = colors[random( 1, colorCount )]
+            local randomColor = rawget( colors, random( 1, colorCount ) )
 
             local particle = emitter:Add( "particles/balloon_bit", startPos )
             if ( particle ) then
@@ -92,8 +125,8 @@ if CLIENT then
                 particle:SetRoll( Rand( 0, 360 ) )
                 particle:SetRollDelta( Rand( -2, 2 ) )
 
-                particle:SetAirResistance( 10 )
-                particle:SetGravity( Vector( 0, 0, -50 ) )
+                particle:SetAirResistance( 45 )
+                particle:SetGravity( Vector( 0, 0, -75 ) )
 
                 particle:SetColor( randomColor.r, randomColor.g, randomColor.b )
 
@@ -109,25 +142,49 @@ if CLIENT then
         emitter:Finish()
     end
 
-    net.Receive( "acf_surprise", function()
+    local function surpriseReceiver()
         local gun = net.ReadEntity()
-        local reloadTime = net.ReadUInt( 5 )
+        local reloadTime = net.ReadFloat()
         local count = Clamp( reloadTime * 225, 1, 275 )
         local forward = gun:GetAngles():Forward()
-        local pos = gun:GetAttachment(gun:LookupAttachment("muzzle")).Pos
+
+        local muzzle = gun:LookupAttachment( "muzzle" )
+        if not muzzle then return false end
+
+        muzzle = gun:GetAttachment( muzzle )
+        if not muzzle then return end
+
+        local pos = muzzle.Pos
+
         confetti( count, pos, forward )
+        if reloadTime < 2.75 then return end
 
-        if reloadTime > 3.5 then
-            for _ = 1, random( 2, 4 ) do
-                local soundPath = surpriseSounds[random( 1, surpriseSoundsCount )]
-                local pitch = Rand( 80, 115 )
+        local maxSounds = 2 + ( Clamp( ceil( reloadTime ), 1, 5 ) )
+        local soundCount = random( 2, maxSounds )
+        local soundEnts = {}
 
-                timer.Simple( Rand( 0, 0.6 ), function()
-                    sound.Play( soundPath, pos, 130, pitch, 1 )
-                end )
-            end
+        local randomStartSound = rawget( surpriseSounds, random( 1, surpriseSoundsCount ) )
+        timer.Simple( 0.025, function()
+            gun:EmitSound( randomStartSound, 130, pitch, 1, CHAN_WEAPON )
+        end )
+
+        for i = 1, soundCount - 1 do
+            rawset( soundEnts, i, playSurpriseSoundOn( gun, pos ) )
         end
-    end )
+
+        gun:CallOnRemove( "SurpriseStopSounds", function()
+            gun:StopSound( randomStartSound )
+            for i = 1, soundCount do
+                local soundEnt = rawget( soundEnts, i )
+
+                if IsValid( soundEnt ) then
+                    soundEnt:Remove()
+                end
+            end
+        end )
+    end
+
+    net.Receive( "acf_surprise", surpriseReceiver )
 end
 
 if SERVER then
@@ -138,6 +195,7 @@ if SERVER then
     end
 
     hook.Add( "ACF_FireShell", "Confet", function( gun )
+        if gun.Owner and gun.Owner:isInBuild() then return end
 
         local recipients = RecipientFilter()
         recipients:AddPVS( gun:GetPos() )
@@ -148,11 +206,12 @@ if SERVER then
 
         net.Start( "acf_surprise" )
         net.WriteEntity( gun )
-        net.WriteUInt( gun.ReloadTime, 5 )
+        net.WriteFloat( gun.ReloadTime or gun.ChargeRate or 1.5 )
         net.Send( recipients )
 
         gun:MuzzleEffect()
         gun:Recoil()
+
         if gun.MagSize then -- Mag-fed/Automatically loaded
             gun.CurrentShot = gun.CurrentShot - 1
 
@@ -165,6 +224,7 @@ if SERVER then
             gun.CurrentShot = 0 -- We only have one shot, so shooting means we're at 0
             gun:Chamber()
         end
+
         return false
     end )
 end
