@@ -141,7 +141,6 @@ if SERVER then
 
         local recipients = RecipientFilter()
         recipients:AddPVS( gun:GetPos() )
-        PrintTable( recipients:GetPlayers() )
 
         for _, ply in ipairs( recipients:GetPlayers() ) do
             if ply:isInBuild() then recipients:RemovePlayer( ply ) end
