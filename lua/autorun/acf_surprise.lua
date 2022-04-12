@@ -196,6 +196,7 @@ if SERVER then
 
     hook.Add( "ACF_FireShell", "Confet", function( gun )
         if gun.Owner and gun.Owner:isInBuild() then return end
+        if gun:GetClass() == "acf_piledriver" then return false end
 
         local recipients = RecipientFilter()
         recipients:AddPVS( gun:GetPos() )
@@ -206,7 +207,7 @@ if SERVER then
 
         net.Start( "acf_surprise" )
         net.WriteEntity( gun )
-        net.WriteFloat( gun.ReloadTime or gun.ChargeRate or 1.5 )
+        net.WriteFloat( gun.ReloadTime or 1.5 )
         net.Send( recipients )
 
         gun:MuzzleEffect()
