@@ -205,10 +205,14 @@ if SERVER then
             if ply:isInBuild() then recipients:RemovePlayer( ply ) end
         end
 
-        net.Start( "acf_surprise" )
-        net.WriteEntity( gun )
-        net.WriteFloat( gun.ReloadTime or 1.5 )
-        net.Send( recipients )
+        local now = CurTime()
+        if (gun.lastConfetti or now) < now - 0.5 then
+            net.Start( "acf_surprise" )
+            net.WriteEntity( gun )
+            net.WriteFloat( gun.ReloadTime or 1.5 )
+            net.Send( recipients )
+            gun.lastConfetti = now
+        end
 
         gun:MuzzleEffect()
         gun:Recoil()
