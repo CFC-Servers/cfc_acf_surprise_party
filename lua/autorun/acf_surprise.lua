@@ -191,6 +191,7 @@ if SERVER then
     util.AddNetworkString( "acf_surprise" )
 
     for _, soundPath in ipairs( surpriseSounds ) do
+        print("Adding: '" .. soundPath .. "' to downloads")
         resource.AddSingleFile( soundPath )
     end
 
@@ -206,7 +207,7 @@ if SERVER then
         end
 
         local now = CurTime()
-        if (gun.lastConfetti or now) < now - 0.5 then
+        if (gun.lastConfetti or 0) < now - 0.5 then
             net.Start( "acf_surprise" )
             net.WriteEntity( gun )
             net.WriteFloat( gun.ReloadTime or 1.5 )
