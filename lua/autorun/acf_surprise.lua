@@ -208,14 +208,14 @@ if SERVER then
     hook.Add( "ACF_FireShell", "Confet", function( gun )
         if not toggle:GetBool() then return end
 
-        if gun.Owner and gun.Owner:isInBuild() then return end
+        if gun.Owner and gun.Owner:IsInBuild() then return end
         if gun:GetClass() == "acf_piledriver" then return false end
 
         local recipients = RecipientFilter()
         recipients:AddPVS( gun:GetPos() )
 
         for _, ply in ipairs( recipients:GetPlayers() ) do
-            if ply:isInBuild() then recipients:RemovePlayer( ply ) end
+            if ply:IsInBuild() then recipients:RemovePlayer( ply ) end
         end
 
         local now = CurTime()
