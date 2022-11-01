@@ -37,6 +37,10 @@ if CLIENT then
     local IsValid = IsValid
     local rawget = rawget
 
+    local maxConfetti = 1650
+    local totalConfetti = 0
+    local confettiLifetime = 2.5
+
     local function playSurpriseSoundOn( ent, origin )
         local soundPath = rawget( surpriseSounds, random( 1, surpriseSoundsCount ) )
         local pitch = Rand( 75, 110 )
@@ -69,7 +73,7 @@ if CLIENT then
     local HORIZONTAL_SPREAD = 80
     local VERTICAL_SPREAD   = 80
 
-    local getRandomizedVelocity = function(original)
+    local getRandomizedVelocity = function( original )
         local x = TIGHTNESS
         local y = random( -HORIZONTAL_SPREAD, HORIZONTAL_SPREAD )
         local z = random( -VERTICAL_SPREAD, VERTICAL_SPREAD )
@@ -106,14 +110,14 @@ if CLIENT then
             local randomColor = rawget( colors, random( 1, colorCount ) )
 
             local particle = emitter:Add( "particles/balloon_bit", startPos )
-            if ( particle ) then
+            if particle then
 
                 -- TODO: Modify by power
                 particle:SetVelocity( getRandomizedVelocity( direction )  * Rand( 350, 1800 ) )
                 particle:SetVelocityScale( true )
 
                 particle:SetLifeTime( 0 )
-                particle:SetDieTime( 2.5 )
+                particle:SetDieTime( confettiLifetime )
 
                 particle:SetStartAlpha( 255 )
                 particle:SetEndAlpha( 255 )
@@ -133,8 +137,7 @@ if CLIENT then
                 particle:SetCollide( true )
 
                 particle:SetBounce( 1 )
-                particle:SetLighting( true )
-
+                particle:SetLighting( false )
             end
 
         end
@@ -145,8 +148,10 @@ if CLIENT then
     local function surpriseReceiver()
         local gun = net.ReadEntity()
         local reloadTime = net.ReadFloat()
-        local count = Clamp( reloadTime * 225, 1, 275 )
         local forward = gun:GetAngles():Forward()
+
+        local maxCount = math.min( maxConfetti - totalConfetti, 275 )
+        local count = Clamp( reloadTime * 225, 0, maxCount )
 
         local muzzle = gun:LookupAttachment( "muzzle" )
         if not muzzle then return false end
@@ -157,6 +162,11 @@ if CLIENT then
         local pos = muzzle.Pos
 
         confetti( count, pos, forward )
+        totalConfetti = totalConfetti + count
+        timer.Simple( confettiLifetime, function()
+            totalConfetti = math.max( 0, totalConfetti - count )
+        end )
+
         if reloadTime < 2.75 then return end
 
         local maxSounds = 2 + ( Clamp( ceil( reloadTime ), 1, 5 ) )
