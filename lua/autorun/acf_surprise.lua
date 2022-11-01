@@ -199,13 +199,15 @@ end
 
 if SERVER then
     util.AddNetworkString( "acf_surprise" )
+    local toggle = CreateConVar( "acf_surprise", "0", FCVAR_ARCHIVE, "Enable/disable the ACF surprise feature" )
 
     for _, soundPath in ipairs( surpriseSounds ) do
-        print("Adding: '" .. soundPath .. "' to downloads")
         resource.AddSingleFile( soundPath )
     end
 
     hook.Add( "ACF_FireShell", "Confet", function( gun )
+        if not toggle:GetBool() then return end
+
         if gun.Owner and gun.Owner:isInBuild() then return end
         if gun:GetClass() == "acf_piledriver" then return false end
 
@@ -217,7 +219,7 @@ if SERVER then
         end
 
         local now = CurTime()
-        if (gun.lastConfetti or 0) < now - 0.5 then
+        if ( gun.lastConfetti or 0 ) < now - 0.5 then
             net.Start( "acf_surprise" )
             net.WriteEntity( gun )
             net.WriteFloat( gun.ReloadTime or 1.5 )
@@ -232,7 +234,7 @@ if SERVER then
             gun.CurrentShot = gun.CurrentShot - 1
 
             if gun.CurrentShot > 0 then -- Not empty
-                gun:Chamber(gun.Cyclic)
+                gun:Chamber( gun.Cyclic )
             else -- Reload the magazine
                 gun:Load()
             end
