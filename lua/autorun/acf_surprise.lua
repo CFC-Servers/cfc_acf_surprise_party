@@ -227,8 +227,8 @@ if SERVER then
             gun.lastConfetti = now
         end
 
-        gun:MuzzleEffect()
-        gun:Recoil()
+        if gun.MuzzleEffect then gun:MuzzleEffect() end
+        if gun.Recoil then gun:Recoil() end
 
         if gun.MagSize then -- Mag-fed/Automatically loaded
             gun.CurrentShot = gun.CurrentShot - 1
