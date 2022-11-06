@@ -147,6 +147,8 @@ if CLIENT then
 
     local function surpriseReceiver()
         local gun = net.ReadEntity()
+        if not IsValid( gun ) then return end
+
         local reloadTime = net.ReadFloat()
         local forward = gun:GetAngles():Forward()
 
