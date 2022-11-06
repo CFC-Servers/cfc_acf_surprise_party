@@ -231,16 +231,19 @@ if SERVER then
         if gun.Recoil then gun:Recoil() end
 
         if gun.MagSize then -- Mag-fed/Automatically loaded
-            gun.CurrentShot = gun.CurrentShot - 1
+            if gun.CurrentShot then
+                gun.CurrentShot = gun.CurrentShot - 1
 
-            if gun.CurrentShot > 0 then -- Not empty
-                gun:Chamber( gun.Cyclic )
-            else -- Reload the magazine
-                gun:Load()
+                if gun.CurrentShot > 0 then -- Not empty
+                    if gun.Chamber then gun:Chamber( gun.Cyclic ) end
+                else -- Reload the magazine
+                    if gun.Load then gun:Load() end
+                end
             end
+
         else -- Single-shot/Manually loaded
-            gun.CurrentShot = 0 -- We only have one shot, so shooting means we're at 0
-            gun:Chamber()
+            if gun.CurrentShot then gun.CurrentShot = 0 end
+            if gun.Chamber then gun:Chamber() end
         end
 
         return false
