@@ -201,14 +201,30 @@ end
 
 if SERVER then
     util.AddNetworkString( "acf_surprise" )
+
     local toggle = CreateConVar( "acf_surprise", "0", FCVAR_ARCHIVE, "Enable/disable the ACF surprise feature" )
+    local override = false
+
+    ACF_Surprise = {
+        Enable = function()
+            override = true
+        end,
+
+        Disable = function()
+            override = false
+        end,
+
+        Status = function()
+            return override
+        end
+    }
 
     for _, soundPath in ipairs( surpriseSounds ) do
         resource.AddSingleFile( soundPath )
     end
 
     hook.Add( "ACF_FireShell", "Confet", function( gun )
-        if not toggle:GetBool() then return end
+        if not override and not toggle:GetBool() then return end
 
         if gun.Owner and gun.Owner:IsInBuild() then return end
         if gun:GetClass() == "acf_piledriver" then return false end
