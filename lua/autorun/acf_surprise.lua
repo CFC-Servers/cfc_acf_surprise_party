@@ -200,6 +200,7 @@ if CLIENT then
 end
 
 if SERVER then
+    resource.AddWorkshop( "3114952509" )
     util.AddNetworkString( "acf_surprise" )
 
     local toggle = CreateConVar( "acf_surprise", "0", FCVAR_ARCHIVE, "Enable/disable the ACF surprise feature" )
@@ -218,10 +219,6 @@ if SERVER then
             return override
         end
     }
-
-    for _, soundPath in ipairs( surpriseSounds ) do
-        resource.AddSingleFile( soundPath )
-    end
 
     hook.Add( "ACF_FireShell", "Confet", function( gun )
         if not override and not toggle:GetBool() then return end
